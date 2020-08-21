@@ -1,0 +1,152 @@
+<html>
+	<head>
+		<title>Welcome to the Fishion Show!</title>
+		<script src="web/psoofword.js"></script>
+		<style>
+		html, body {
+			background-color: #000;
+			padding: 0;
+			margin: 0;
+			width: 100vw;
+			height: 100vh;
+			background-size: cover;
+			background-repeat: no-repeat;
+			background-attachment: fixed;
+			background-position: center;
+		}
+		</style>
+	</head>
+	<body id="fishionshow">
+		<h1 id="obj" hidden>FISHION SHOW!</h1>
+		<script>
+		( async () => {
+			if( window.psoofkey !== "" ) {
+				console.log( "YES WE HAZ KEY" );
+			}
+			if( window.pexelspsoof !== "" ) {
+				console.log( "YES WE HAZ PEXELS KEY" );
+			}
+
+			const endpoint = "https://fishionshow.cognitiveservices.azure.com/";
+
+			let images = await getFishionShowImages();
+
+			setInterval( () => {
+				nextFishionQueue();
+			}, 10000 );
+			nextFishionQueue();
+
+			async function nextFishionQueue() {
+				let index = getRandomInt( images.length );
+				let url = images[ index ].src.original;
+				let thumbnail = images[ index ].src.large2x;
+				document.getElementById( "fishionshow" ).style.backgroundImage = `url(${url})`;
+				let detected = await detectObject( thumbnail );
+				let description = await lookupInfo( thumbnail );
+				document.getElementById( "obj" ).innerText = detected ? detected.object : "";
+				if( detected ) {
+					await speakText( `It looks like ${detected.object}` );
+				}
+				await speakText( description );
+			}
+
+			let voicesFirstLoad = true;
+			let voicesLoading = false;
+			async function speakText( text ) {
+				return new Promise( ( resolve, reject ) => {
+					// list of languages is probably not loaded, wait for it
+					if( window.speechSynthesis.getVoices().length === 0 ) {
+						if( !voicesLoading ) {
+							voicesLoading = true;
+							window.speechSynthesis.addEventListener( 'voiceschanged', async function() {
+								if( voicesFirstLoad ) {
+									voicesFirstLoad = false;
+									console.log( "voiceschanged" );
+									await speakText( text );
+									resolve();
+								}
+							});
+						}
+					}
+					else {
+						// languages list available, no need to wait
+						var available_voices = window.speechSynthesis.getVoices();
+
+						// this will hold an english voice
+						var english_voice = '';
+
+						// find voice by language locale "en-US"
+						// if not then select the first voice
+						let english_voices = available_voices.filter( x => x.lang === "en-US" );
+
+						// new SpeechSynthesisUtterance object
+						var utter = new SpeechSynthesisUtterance();
+						utter.rate = 1;
+						utter.pitch = 0.5 + Math.random();
+						utter.text = text;
+						utter.voice = english_voices[ getRandomInt( english_voices.length ) ];
+
+						// event after text has been spoken
+						utter.onend = function() {
+							// alert('Speech has finished');
+							resolve();
+						}
+
+						// speak
+						window.speechSynthesis.speak(utter);
+					}
+				});
+			}
+
+			async function lookupInfo( url ) {
+				let result = await fetch( `${endpoint}vision/v3.0/analyze?visualFeatures=Description`, {
+					method: "POST",
+					headers: {
+						'Content-Type': 'application/json',
+						"ocp-apim-subscription-key": window.psoofkey
+					},
+					body: JSON.stringify( {
+						url: url
+					})
+				} ).then( r => r.json() );
+				console.log( result );
+				if( result.description && result.description.captions && result.description.captions.length > 0 ) {
+					return result.description.captions[ 0 ].text;
+				}
+				return "";
+			}
+
+			async function getFishionShowImages() {
+				let images = await fetch( `https://api.pexels.com/v1/search?per_page=80&query=underwater fish`, {
+					headers: {
+						"Authorization": window.pexelspsoof
+					}
+				} ).then( r => r.json() );
+				console.log( images );
+				return images.photos;
+			}
+
+			async function detectObject( url ) {
+				let result = await fetch( `${endpoint}vision/v3.0/detect?visualFeatures=Description`, {
+					method: "POST",
+					headers: {
+						'Content-Type': 'application/json',
+						"ocp-apim-subscription-key": window.psoofkey
+					},
+					body: JSON.stringify( {
+						url: url
+					})
+				} ).then( r => r.json() );
+				let objects = result.objects || [];
+				objects = objects.filter( x => x.object !== "person" );
+				console.log( result );
+				return objects[ 0 ];
+			}
+
+			function getRandomInt( number ) {
+				return Math.floor( number * Math.random() );
+			}
+		})();
+		</script>
+	</body>
+</html>

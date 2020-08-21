@@ -1,0 +1,37 @@
+{
+  "name": "fishionshow",
+  "version": "1.0.0",
+  "description": "Fashion Show for Fish using Microsoft Azure Computer Vision!",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/instafluff/FishionShow.git"
+  },
+  "keywords": [
+    "Instafluff",
+    "Microsoft",
+    "Azure",
+    "Fish",
+    "Aquarium",
+    "Virtual",
+    "Computer",
+    "Vision",
+    "Fashion",
+    "Show",
+    "Overlay",
+    "Browser",
+    "Source"
+  ],
+  "author": "Instafluff",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/instafluff/FishionShow/issues"
+  },
+  "homepage": "https://github.com/instafluff/FishionShow#readme",
+  "dependencies": {
+    "webwebweb": "^1.4.0"
+  }
+}
